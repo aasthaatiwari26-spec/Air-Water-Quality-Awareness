@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air & Water Quality Awareness</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F4F0; --panel:#FFFFFF; --ink:#20241F; --ink-soft:#5B615A; --line:#E1DED6;
+    --moss:#3E6B52; --moss-deep:#284A38; --amber:#C97A3A; --rose:#B4514F; --slate:#4C6178;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#181A17; --panel:#212420; --ink:#EDECE7; --ink-soft:#A8ACA4; --line:#33362F; }
+  }
+  :root[data-theme="dark"]{ --bg:#181A17; --panel:#212420; --ink:#EDECE7; --ink-soft:#A8ACA4; --line:#33362F; }
+
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+  h1,h2,h3{font-family:'Inter', serif; font-weight:600; letter-spacing:-0.01em; margin:0 0 10px;}
+  a{color:var(--moss-deep);}
+
+  /* Nav */
+  nav{ position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line); z-index:10; }
+  nav .wrap{ display:flex; align-items:center; justify-content:space-between; padding:16px 24px; }
+  nav .brand{ font-family:'Inter',serif; font-weight:600; font-size:18px; }
+  nav .links{ display:flex; gap:6px; flex-wrap:wrap; }
+  nav button.navlink{
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:600;
+    background:none; border:none; color:var(--ink-soft); padding:8px 14px; border-radius:20px; cursor:pointer;
+  }
+  nav button.navlink.active{ background:var(--moss); color:#fff; }
+  nav button.navlink:hover:not(.active){ background:var(--line); color:var(--ink); }
+  .theme-toggle{
+    background:none; border:1px solid var(--line); border-radius:20px; padding:7px 12px; cursor:pointer;
+    font-size:13px; color:var(--ink-soft); margin-left:8px;
+  }
+  .theme-toggle:hover{ border-color:var(--moss); }
+
+  .page{ display:none; padding:48px 0 80px; }
+  .page.active{ display:block; }
+
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  .fade-in{ animation:fadeUp 0.7s ease both; }
+  .fade-in.d1{ animation-delay:0.08s; }
+  .fade-in.d2{ animation-delay:0.16s; }
+  .fade-in.d3{ animation-delay:0.24s; }
+
+  .card{ transition:transform 0.18s ease, box-shadow 0.18s ease; }
+  .card:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(32,36,31,0.10); }
+
+  /* Home */
+  .hero{
+    padding:44px 0 8px; border-bottom:3px solid var(--ink); margin-bottom:8px;
+  }
+  .hero .eyebrow{ color:var(--moss-deep); font-weight:600; font-size:13px; letter-spacing:0.02em; margin-bottom:12px; }
+  .hero-row{ display:flex; gap:40px; align-items:flex-end; flex-wrap:wrap; padding-bottom:36px; }
+  .hero h1{ font-size:clamp(30px,4.6vw,46px); max-width:16ch; flex:1 1 380px; }
+  .hero-side{ flex:0 0 220px; }
+  .hero-side .bignum{ font-family:'Inter',serif; font-size:64px; font-weight:700; line-height:0.9; color:var(--moss-deep); }
+  .hero-side .bignum-lbl{ color:var(--ink-soft); font-size:13px; margin-top:6px; max-width:20ch; }
+  .hero p{ color:var(--ink-soft); font-size:16.5px; max-width:58ch; margin:10px 0 24px; }
+  .cta-row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .btn{
+    display:inline-block; font-weight:600; font-size:15px; padding:12px 22px; border-radius:8px;
+    text-decoration:none; cursor:pointer; border:1px solid var(--moss); transition:opacity 0.15s ease;
+  }
+  .btn.primary{ background:var(--moss); color:#fff; }
+  .btn.ghost{ background:transparent; color:var(--moss-deep); }
+  .btn:hover{ opacity:0.85; }
+
+  .fieldnote{
+    border-left:3px solid var(--amber); background:var(--panel); border-radius:0 8px 8px 0;
+    padding:16px 20px; margin:28px 0; font-size:14.5px; color:var(--ink-soft);
+  }
+  .fieldnote strong{ color:var(--ink); }
+
+  .stat-strip{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:44px; }
+  @media (max-width:700px){ .stat-strip{grid-template-columns:1fr;} }
+  .stat-strip .item{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .stat-strip .item .n{ font-family:'Inter',serif; font-size:30px; font-weight:600; color:var(--moss-deep); }
+  .stat-strip .item .l{ color:var(--ink-soft); font-size:13.5px; margin-top:4px; }
+
+  .pillars{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:56px; }
+  @media (max-width:700px){ .pillars{grid-template-columns:1fr;} }
+  .pillar{ padding:20px 0; border-top:2px solid var(--ink); }
+  .pillar h3{ font-size:18px; margin-bottom:6px; }
+  .pillar p{ color:var(--ink-soft); font-size:14.5px; margin:0; }
+
+  /* About */
+  .about-lead{ font-size:19px; color:var(--ink); max-width:65ch; margin-bottom:28px; }
+  .about-lead strong{ color:var(--moss-deep); }
+  .about-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:32px; }
+  @media (max-width:700px){ .about-grid{grid-template-columns:1fr;} }
+  .about-block h3{ font-size:16px; margin-bottom:8px; }
+  .about-block p, .about-block ul{ color:var(--ink-soft); font-size:15px; }
+  .about-block ul{ padding-left:20px; margin:0; }
+  .about-block li{ margin-bottom:6px; }
+
+  /* Team */
+  .team-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:28px; }
+  @media (max-width:700px){ .team-grid{grid-template-columns:1fr;} }
+  .team-card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:22px; }
+  .team-card .avatar{
+    width:48px; height:48px; border-radius:50%; background:var(--moss); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-family:'Inter',serif; font-weight:600; font-size:18px; margin-bottom:14px;
+  }
+  .team-card h4{ margin:0 0 4px; font-family:'Inter',sans-serif; font-weight:700; font-size:16px; }
+  .team-card .role{ color:var(--moss-deep); font-size:13px; font-weight:600; margin-bottom:8px; }
+  .team-card .desc{ color:var(--ink-soft); font-size:14px; margin:0; }
+
+  /* Dashboard (reuses existing structure) */
+  .input-panel{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px 22px; margin-bottom:32px; }
+  .input-panel h2{font-size:16px; margin:0 0 4px; font-weight:600;}
+  .input-panel .hint{color:var(--ink-soft); font-size:13px; margin:0 0 14px;}
+  textarea{ width:100%; min-height:100px; resize:vertical; font-family:ui-monospace,monospace; font-size:13px; padding:12px; border-radius:7px; border:1px solid var(--line); background:var(--bg); color:var(--ink); }
+  .row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:center;}
+  button.dbtn{ font-family:'Inter',sans-serif; font-weight:600; font-size:14px; padding:10px 18px; border-radius:7px; border:1px solid var(--moss); background:var(--moss); color:#fff; cursor:pointer; }
+  button.dbtn.secondary{ background:transparent; color:var(--moss); }
+  button.dbtn:hover{ opacity:0.9; }
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:24px;}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px;}
+  .stat .num{font-family:'Inter',serif; font-size:30px; font-weight:600; line-height:1;}
+  .stat .lbl{color:var(--ink-soft); font-size:13px; margin-top:6px;}
+
+  .grid2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:20px;}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+  /* Filter bar */
+  .filter-bar{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
+  .filter-bar label{ font-size:13px; color:var(--ink-soft); font-weight:600; margin-right:6px; }
+  .filter-bar select, .search-box{
+    padding:9px 12px; border-radius:7px; border:1px solid var(--line); background:var(--panel); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14px;
+  }
+  .filter-bar .clear{ font-size:13px; color:var(--moss-deep); background:none; border:none; cursor:pointer; font-weight:600; text-decoration:underline; }
+
+  /* Insight cards */
+  .insights{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:28px; }
+  .insight{ background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--moss); border-radius:10px; padding:16px 18px; }
+  .insight .k{ font-size:12.5px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:6px; }
+  .insight .v{ font-family:'Inter',serif; font-size:19px; font-weight:600; color:var(--ink); }
+
+  /* Sub-tabs */
+  .subtabs{ display:flex; gap:6px; margin-bottom:22px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:0; }
+  .subtab{
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:600; background:none; border:none;
+    color:var(--ink-soft); padding:10px 4px; margin-right:18px; cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .subtab.active{ color:var(--moss-deep); border-bottom-color:var(--moss); }
+  .subpanel{ display:none; }
+  .subpanel.active{ display:block; }
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:20px;}
+  .card h3{margin:0 0 14px; font-size:15px; font-weight:600;}
+  .card canvas{max-height:280px;}
+
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th,td{text-align:left; padding:9px 8px; border-bottom:1px solid var(--line);}
+  th{color:var(--ink-soft); font-weight:600; font-size:12px;}
+  .empty{color:var(--ink-soft); font-style:italic; padding:20px 0; text-align:center; font-size:14px;}
+
+  footer{ border-top:1px solid var(--line); padding:24px; text-align:center; color:var(--ink-soft); font-size:13px; }
+
+  /* Quick summary cards */
+  .quick-summary{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+  @media (max-width:760px){ .quick-summary{ grid-template-columns:repeat(2,1fr); } }
+  .quick-summary .qcard{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+  .quick-summary .qcard .qn{ font-family:'Inter',serif; font-size:26px; font-weight:600; color:var(--moss-deep); }
+  .quick-summary .qcard .ql{ color:var(--ink-soft); font-size:12.5px; margin-top:4px; }
+
+  /* Survey Insights */
+  .si-row{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:700px){ .si-row{grid-template-columns:1fr;} }
+  .si-list{ list-style:none; margin:0; padding:0; }
+  .si-list li{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .si-list li:last-child{ border-bottom:none; }
+  .si-list .si-label{ color:var(--ink); }
+  .si-list .si-val{ color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .si-total{ font-family:'Inter',serif; font-size:22px; font-weight:600; color:var(--moss-deep); margin-bottom:6px; }
+
+  /* Key findings */
+  #keyFindingsList{ margin:0; padding-left:20px; }
+  #keyFindingsList li{ margin-bottom:8px; font-size:14.5px; color:var(--ink); }
+
+  /* Simulated environmental readings */
+  .env-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:12px; }
+  .env-tile{ background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+  .env-tile .el{ font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .env-tile .ev{ font-family:'Inter',serif; font-size:20px; font-weight:600; margin:4px 0; }
+  .badge{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+  .badge.safe{ background:#DCEEE0; color:#1E5B34; }
+  .badge.caution{ background:#FBE8CF; color:#8A5518; }
+  .badge.unsafe{ background:#F6D8D6; color:#8A2A26; }
+  :root[data-theme="dark"] .badge.safe{ background:#1E3A28; color:#8FD9A5; }
+  :root[data-theme="dark"] .badge.caution{ background:#4A3517; color:#F0C27E; }
+  :root[data-theme="dark"] .badge.unsafe{ background:#4A2321; color:#F3A8A3; }
+  .env-meta{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:4px; }
+  .env-updated{ color:var(--ink-soft); font-size:12.5px; }
+  .sim-tag{ background:var(--amber); color:#fff; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; letter-spacing:0.02em; }
+
+  .status-legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:14px; font-size:13px; color:var(--ink-soft); }
+  .status-legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+  .status-legend .dot.safe{ background:#3E9E5C; }
+  .status-legend .dot.caution{ background:#D99A3E; }
+  .status-legend .dot.unsafe{ background:#C8514D; }
+
+  /* Awareness tips */
+  .tips-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:10px; }
+  .tip{ background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:13.5px; color:var(--ink-soft); }
+  .tip strong{ color:var(--ink); display:block; margin-bottom:4px; font-size:13.5px; }
+
+  /* Back to top */
+  #backToTop{
+    position:fixed; bottom:24px; right:24px; width:44px; height:44px; border-radius:50%;
+    background:var(--moss); color:#fff; border:none; cursor:pointer; font-size:18px;
+    display:none; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.2); z-index:20;
+  }
+  #backToTop.show{ display:flex; }
+
+/* ===== EnviroScan Dashboard Redesign ===== */
+:root{--accent:#22c7b8;--accent2:#4f8cff;--glow:rgba(34,199,184,.16);--sidebar:240px;}
+body{background:var(--bg);}
+nav{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar);height:100vh;border-right:1px solid var(--line);border-bottom:0;z-index:100;background:var(--panel);padding:22px 14px;box-shadow:8px 0 30px rgba(0,0,0,.04)}
+nav .wrap{height:100%;max-width:none;padding:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start}
+nav .brand{display:flex;align-items:center;gap:10px;font-size:19px;line-height:1.15;padding:4px 10px 22px;border-bottom:1px solid var(--line)}
+nav .brand:before{content:'◉';width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:Arial,sans-serif;font-size:17px;box-shadow:0 0 22px rgba(34,199,184,.22)}
+nav .links{display:flex;flex-direction:column;gap:7px;margin-top:20px}
+nav button.navlink{width:100%;text-align:left;border:1px solid transparent;border-radius:10px;padding:11px 13px;font-size:14px;color:var(--ink-soft);background:transparent;display:flex;align-items:center;gap:10px}
+nav button.navlink:before{font-size:15px;opacity:.85}
+nav button.navlink[data-page="home"]:before{content:'⌂'}
+nav button.navlink[data-page="about"]:before{content:'ⓘ'}
+nav button.navlink[data-page="dashboard"]:before{content:'▦'}
+nav button.navlink.active{background:linear-gradient(90deg,var(--glow),transparent);color:var(--accent);border-color:rgba(34,199,184,.18)}
+nav button.navlink:hover:not(.active){background:rgba(127,127,127,.08);color:var(--ink)}
+.theme-toggle{margin:20px 6px 0!important;width:calc(100% - 12px);border-radius:10px!important;text-align:left;background:rgba(127,127,127,.07);border-color:var(--line);padding:10px 12px!important}
+nav:after{content:'ENVIRONMENTAL AWARENESS\A Dashboard • Survey • Insights';white-space:pre;position:absolute;left:24px;right:24px;bottom:24px;font-size:11px;line-height:1.55;color:var(--ink-soft);opacity:.8;padding-top:16px;border-top:1px solid var(--line)}
+.page{padding:36px 0 80px;margin-left:var(--sidebar)}
+footer{margin-left:var(--sidebar)}
+#backToTop{right:24px}
+.wrap{max-width:1240px}
+.page > .wrap > h2{font-size:30px;margin-bottom:6px}
+.page > .wrap > p{max-width:850px}
+.hero{padding:36px 0 18px;border-bottom:1px solid var(--line)}
+.hero h1{font-size:clamp(34px,4.2vw,58px);max-width:18ch}
+.hero .eyebrow{color:var(--accent);letter-spacing:.1em}
+.btn{border-radius:10px;box-shadow:0 5px 18px rgba(0,0,0,.06)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0}
+.btn.ghost{border-color:var(--line);color:var(--ink)}
+.stat-strip{gap:14px;margin-top:30px}
+.stat-strip .item,.qcard,.stat,.card,.input-panel,.team-card,.insight{border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.04)}
+.stat-strip .item{border-left:3px solid var(--accent)}
+.quick-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0 24px}
+.qcard{background:var(--panel);border:1px solid var(--line);padding:17px 18px;position:relative;overflow:hidden}
+.qcard:after{content:'';position:absolute;width:70px;height:70px;border-radius:50%;right:-28px;top:-28px;background:var(--glow)}
+.qn{font-family:'Inter',serif;font-size:29px;font-weight:700;color:var(--accent)}
+.ql{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+.dashboard-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);position:sticky;top:14px;z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.05)}
+.toolbar-left,.toolbar-right{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.tool-btn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:8px 11px;font-size:12.5px;font-weight:700;cursor:pointer}
+.tool-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tool-btn.primary-tool{background:var(--accent);color:#071414;border-color:var(--accent)}
+.live-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent);padding:7px 10px;border-radius:999px;background:var(--glow);border:1px solid rgba(34,199,184,.2)}
+.live-badge span{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(34,199,184,.12);animation:pulseLive 1.8s infinite}
+@keyframes pulseLive{50%{opacity:.35;transform:scale(.8)}}
+.subtabs{gap:7px;border:0;padding:0;margin:0 0 20px}
+.subtab{border:1px solid var(--line);background:var(--panel);padding:9px 13px;border-radius:9px;margin:0}
+.subtab.active{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.card{padding:21px}
+.card h3{font-size:15px}
+.insight{border-left-color:var(--accent)}
+.filter-bar{padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.filter-bar select,.search-box{border-radius:9px}
+.dbtn{border-radius:9px!important}
+.section-anchor{scroll-margin-top:90px}
+@media(max-width:900px){
+  :root{--sidebar:0px}
+  nav{position:sticky;left:auto;top:0;width:100%;height:auto;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line);box-shadow:0 5px 18px rgba(0,0,0,.05)}
+  nav .wrap{height:auto;display:block}
+  nav .brand{padding:2px 4px 10px;border-bottom:0}
+  nav .brand:before{width:30px;height:30px}
+  nav .links{flex-direction:row;overflow-x:auto;margin-top:4px;padding-bottom:2px}
+  nav button.navlink{width:auto;white-space:nowrap;padding:8px 11px}
+  .theme-toggle{width:auto!important;margin:0 0 0 2px!important;white-space:nowrap}
+  nav:after{display:none}
+  .page{margin-left:0;padding-top:28px}
+  footer{margin-left:0}
+  .quick-summary{grid-template-columns:repeat(2,1fr)}
+  .dashboard-toolbar{position:static}
+}
+@media(max-width:560px){
+  .quick-summary{grid-template-columns:1fr 1fr}
+  .qcard{padding:14px}
+  .qn{font-size:25px}
+  .hero h1{font-size:34px}
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--accent:#35d6c4;--accent2:#6d9dff;--glow:rgba(53,214,196,.12)}
+}
+:root[data-theme="dark"]{--accent:#35d6c4;--accent2:#6d9dff;--glow:rgba(53,214,196,.12)}
+
+
+.feature-grid,.comparison-grid,.tips-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:24px}.feature-card,.info-card,.tip-card{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.05)}.feature-card h3,.info-card h3,.tip-card h3{margin-top:0}.metric-big{font-size:42px;font-weight:800;letter-spacing:-1px;margin:8px 0}.metric-row{display:flex;gap:42px}.metric-row p,.feature-card p{margin:4px 0;color:var(--ink-soft)}.mini-metrics{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0}.mini-metrics span{padding:9px 12px;border-radius:10px;background:var(--soft)}.quality-pill{display:inline-block;padding:8px 12px;border-radius:999px;background:var(--soft);font-size:12px;font-weight:700}.legend-row{display:flex;gap:20px;flex-wrap:wrap;margin:15px 0}.tips-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.tip-icon{font-size:30px;margin-bottom:10px}.page-lead{max-width:700px;color:var(--ink-soft)}@media(max-width:800px){.feature-grid,.comparison-grid,.tips-grid{grid-template-columns:1fr}.metric-row{gap:24px}}
+
+*{font-family:"Times New Roman",Times,serif !important;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">Air & Water Quality Awareness</div>
+    <div class="links">
+      <button class="navlink active" data-page="home">Home</button>
+      <button class="navlink" data-page="about">About</button>
+      <button class="navlink" data-page="dashboard">Dashboard</button>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙 Dark</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<section class="page active" id="page-home">
+  <div class="wrap">
+    <div class="hero fade-in">
+      <div class="eyebrow">FIELD SURVEY · MUMBAI REGION · SEPT 2026</div>
+      <div class="hero-row">
+        <h1>What people actually notice about the air and water around them</h1>
+      </div>
+      <p>Most pollution data comes from sensors and government reports. We wanted the other half of the picture — what residents themselves notice, worry about, and deal with day to day. So we asked, and built this to make sense of the answers.</p>
+      <div class="cta-row">
+        <button class="btn primary" onclick="goTo('dashboard')">Open the dashboard</button>
+        <button class="btn ghost" onclick="goTo('about')">Read about the project</button>
+      </div>
+    </div>
+
+    <div class="fieldnote fade-in d1">
+      <strong>Why this matters:</strong> perception often lags — or runs ahead of — the actual numbers. Comparing what people report against known problem areas (like heavy traffic corridors or industrial belts) is where this gets interesting.
+    </div>
+
+    <div class="stat-strip fade-in d1">
+      <div class="item"><div class="n" id="homeStat2">0</div><div class="l">Questions covering air & water quality</div></div>
+      <div class="item"><div class="n" id="homeStat3">0</div><div class="l">Areas surveyed across the region</div></div>
+    </div>
+
+    <div class="pillars fade-in d2">
+      <div class="pillar">
+        <h3>Collect</h3>
+        <p>Responses gathered directly from residents through a short Google Form survey.</p>
+      </div>
+      <div class="pillar">
+        <h3>Visualize</h3>
+        <p>Every answer is charted automatically — ratings, sources of pollution, and health effects people reported.</p>
+      </div>
+      <div class="pillar">
+        <h3>Understand</h3>
+        <p>Patterns become easy to spot: which areas feel most affected, and what people think is causing it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<!-- ENVIRONMENT -->
+<section class="page" id="page-environment">
+  <div class="wrap">
+    <span class="eyebrow">ENVIRONMENTAL MONITORING</span>
+    <h2>Air & Water Status</h2>
+    <p class="page-lead">Demo environmental readings presented for awareness and visualization.</p>
+    <div class="feature-grid">
+      <div class="feature-card"><h3>🌬️ Air Quality</h3><div class="metric-big" id="envAqi">—</div><p>Air Quality Index (AQI)</p><div class="mini-metrics"><span>PM2.5 <b id="envPm25">—</b></span><span>PM10 <b id="envPm10">—</b></span><span>NO₂ <b id="envNo2">—</b></span></div><span class="quality-pill" id="envAirStatus">Updating…</span></div>
+      <div class="feature-card"><h3>💧 Water Quality</h3><div class="metric-row"><div><div class="metric-big" id="envPh">—</div><p>pH</p></div><div><div class="metric-big" id="envTds">—</div><p>TDS</p></div></div><p>Selected demo water-source indicators</p><span class="quality-pill" id="envWaterStatus">Updating…</span></div>
+    </div>
+    <div class="info-card"><h3>How to read the status</h3><div class="legend-row"><span>🟢 Safe</span><span>🟡 Caution</span><span>🔴 Unsafe</span></div><p>These values are simulated/demo readings. They are not measurements from a physical sensor or live environmental API.</p><small id="envUpdated">Last updated: —</small></div>
+  </div>
+</section>
+
+<!-- TRENDS -->
+<section class="page" id="page-trends">
+  <div class="wrap"><span class="eyebrow">COMPARE & EXPLORE</span><h2>Trends & Comparison</h2><p class="page-lead">Compare reported air and water quality perceptions from the survey.</p>
+    <div class="comparison-grid"><div class="info-card"><h3>Air Quality by Area</h3><canvas id="trendAirChart"></canvas></div><div class="info-card"><h3>Water Quality by Source</h3><canvas id="trendWaterChart"></canvas></div></div>
+    <div class="feature-grid"><div class="feature-card"><h3>📊 Survey Coverage</h3><div class="metric-big">72</div><p>Total survey responses</p></div><div class="feature-card"><h3>🔎 Important</h3><p>These charts represent residents’ reported perceptions, not laboratory or sensor measurements.</p></div></div>
+  </div>
+</section>
+
+<!-- AWARENESS -->
+<section class="page" id="page-tips">
+  <div class="wrap"><span class="eyebrow">COMMUNITY AWARENESS</span><h2>Awareness & Tips</h2><p class="page-lead">Simple information connected to the project’s air and water quality awareness goal.</p>
+    <div class="tips-grid"><div class="tip-card"><div class="tip-icon">🌬️</div><h3>Air Quality</h3><p>Keep track of local air-quality information and reduce unnecessary exposure when pollution levels are high.</p></div><div class="tip-card"><div class="tip-icon">🚰</div><h3>Water Quality</h3><p>Pay attention to changes in water appearance, taste or smell and use a trusted safe-water source.</p></div><div class="tip-card"><div class="tip-icon">♻️</div><h3>Reduce Pollution</h3><p>Dispose of waste responsibly and support cleaner practices in your community.</p></div><div class="tip-card"><div class="tip-icon">📢</div><h3>Spread Awareness</h3><p>Share understandable environmental information with family, classmates and the local community.</p></div></div>
+    <div class="info-card"><h3>Why visualization helps</h3><p>Charts, indicators and status labels can make environmental information easier to understand than raw numerical readings alone.</p></div>
+  </div>
+</section>
+
+<section class="page" id="page-about">
+  <div class="wrap">
+    <h2>About this project</h2>
+    <p class="about-lead">This project studies how <strong>residents perceive air and water quality</strong> in their own neighborhoods — not sensor readings, but lived experience: what people notice, what they think is causing it, and how it affects their health.</p>
+
+    <div class="about-grid">
+      <div class="about-block">
+        <h3>Why we did this</h3>
+        <p>Pollution data is often technical and hard to relate to. We wanted to capture what people actually notice in daily life — bad smells, visible dust, discoloured water — and see if those perceptions line up across neighborhoods.</p>
+      </div>
+      <div class="about-block">
+        <h3>How the data was collected</h3>
+        <p>A Google Form was shared with residents across several areas, asking about air quality ratings, how often pollution is noticed, likely sources, water quality, and any health issues experienced.</p>
+      </div>
+      <div class="about-block">
+        <h3>What the dashboard shows</h3>
+        <ul>
+          <li>Self-reported air quality ratings by area</li>
+          <li>How often people notice pollution</li>
+          <li>What residents believe is the major source</li>
+          <li>Health problems people associate with it</li>
+          <li>Water quality perception and concerns</li>
+        </ul>
+      </div>
+      <div class="about-block">
+        <h3>Tools used</h3>
+        <ul>
+          <li>Google Forms for data collection</li>
+          <li>Google Sheets for storing responses</li>
+          <li>This dashboard for visualization</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:40px;">Methodology & limitations</h3>
+    <p style="color:var(--ink-soft); font-size:15px; max-width:70ch;">This is a self-reported perception survey, not a sensor-based measurement — ratings reflect how people feel about air and water quality, not verified AQI or water-testing data. The sample skews toward the 18–25 age group and a handful of Mumbai-region neighborhoods, so it isn't representative of the wider city. We think it's still useful: it captures lived experience that official data often misses, and it's a starting point for comparing perception against measured pollution data in future work.</p>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section class="page" id="page-dashboard">
+  <div class="wrap">
+    <h2>Survey dashboard</h2>
+    <p style="color:var(--ink-soft); margin-bottom:24px;">Explore how residents rated air & water quality, filtered however you like. Everything runs in your browser — nothing is uploaded anywhere.</p>
+
+<div class="dashboard-toolbar" aria-label="Dashboard controls">
+  <div class="toolbar-left">
+    <span class="live-badge"><span></span> Dashboard ready</span>
+    <button class="tool-btn primary-tool" type="button" onclick="openSub('overview')">Overview</button>
+    <button class="tool-btn" type="button" onclick="openSub('air')">Air</button>
+    <button class="tool-btn" type="button" onclick="openSub('water')">Water</button>
+    <button class="tool-btn" type="button" onclick="openSub('health')">Health</button>
+    <button class="tool-btn" type="button" onclick="scrollToId('surveyInsights')">Insights</button>
+    <button class="tool-btn" type="button" onclick="scrollToId('awarenessTips')">Tips</button>
+  </div>
+  <div class="toolbar-right">
+    <button class="tool-btn" type="button" onclick="refreshEnvironment()">↻ Refresh readings</button>
+    <button class="tool-btn" type="button" onclick="window.print()">▣ Print / PDF</button>
+  </div>
+</div>
+
+    <div class="input-panel">
+      <h2>Add your data</h2>
+      <p class="hint">Best & most reliable: in your Sheet go to <strong>File → Download → Comma-separated values (.csv)</strong>, then upload that file below. Or paste data directly.</p>
+      <div class="row" style="margin-bottom:12px;">
+        <input type="file" id="csvFile" accept=".csv,text/csv" style="font-size:13px;">
+      </div>
+      <textarea id="csvInput" placeholder="...or paste your full sheet data here (with headers in the first row)"></textarea>
+      <div class="row">
+        <button class="dbtn" id="buildBtn" type="button">Build dashboard</button>
+        <button class="dbtn secondary" id="sampleBtn" type="button">Reload survey data</button>
+      </div>
+    </div>
+
+    <div class="quick-summary" id="quickSummary">
+      <div class="qcard"><div class="qn" id="qsResponses">—</div><div class="ql">Survey responses</div></div>
+      <div class="qcard"><div class="qn" id="qsAreas">—</div><div class="ql">Air quality locations</div></div>
+      <div class="qcard"><div class="qn" id="qsWaterSources">—</div><div class="ql">Water sources reported</div></div>
+      <div class="qcard"><div class="qn">4</div><div class="ql">Environmental parameters tracked</div></div>
+    </div>
+
+    <div class="stats" id="statsRow"></div>
+
+    <div class="filter-bar" id="filterBar" style="display:none;">
+      <div><label>Age group</label><select id="filterAge"><option value="">All</option></select></div>
+      <div><label>Area</label><select id="filterArea"><option value="">All</option></select></div>
+      <div><label>Category</label><select id="filterCategory"><option value="">All</option></select></div>
+      <button class="clear" id="clearFilters" type="button">Clear filters</button>
+    </div>
+
+    <div class="insights" id="insightsRow"></div>
+
+    <div class="subtabs" id="subtabs">
+      <button class="subtab active" data-sub="overview">Overview</button>
+      <button class="subtab" data-sub="air">Air quality</button>
+      <button class="subtab" data-sub="water">Water quality</button>
+      <button class="subtab" data-sub="health">Health impact</button>
+    </div>
+
+    <div class="subpanel active" id="sub-overview">
+      <div class="card">
+        <div class="env-meta">
+          <h3 style="margin:0;">Environmental Readings <span class="sim-tag">LIVE SIMULATION</span></h3>
+          <span class="env-updated" id="envUpdated">Last updated: —</span>
+        </div>
+        <p style="color:var(--ink-soft); font-size:13px; margin:4px 0 0;">These are simulated/demo values for illustration — not real sensor readings.</p>
+        <div class="env-grid" id="envGrid"></div>
+        <div class="status-legend">
+          <span><span class="dot safe"></span>Safe</span>
+          <span><span class="dot caution"></span>Caution</span>
+          <span><span class="dot unsafe"></span>Unsafe</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Explore a question</h3>
+        <select id="colSelect" style="padding:8px 10px; border-radius:7px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px; max-width:100%;"></select>
+        <canvas id="mainChart" style="max-height:340px;"></canvas>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Average air rating by area (top areas)</h3><canvas id="chartAreaCompare" style="max-height:300px;"></canvas></div>
+        <div class="card"><h3>Air rating vs water rating</h3><canvas id="chartCorrelation" style="max-height:300px;"></canvas></div>
+      </div>
+      <div class="grid2" id="autoGrid"></div>
+    </div>
+
+    <div class="subpanel" id="sub-air">
+      <div class="grid2">
+        <div class="card"><h3>Air quality rating distribution</h3><canvas id="chartAirRating" style="max-height:300px;"></canvas></div>
+        <div class="card"><h3>Major source of air pollution</h3><canvas id="chartAirSource" style="max-height:300px;"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>How often pollution is noticed</h3><canvas id="chartAirFreq" style="max-height:300px;"></canvas></div>
+        <div class="card"><h3>Concern level about air pollution</h3><canvas id="chartAirConcern" style="max-height:300px;"></canvas></div>
+      </div>
+    </div>
+
+    <div class="subpanel" id="sub-water">
+      <div class="grid2">
+        <div class="card"><h3>Water quality rating distribution</h3><canvas id="chartWaterRating" style="max-height:300px;"></canvas></div>
+        <div class="card"><h3>Main source of drinking water</h3><canvas id="chartWaterSource" style="max-height:300px;"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Water quality issues noticed</h3><canvas id="chartWaterIssue" style="max-height:300px;"></canvas></div>
+        <div class="card"><h3>Concern level about water pollution</h3><canvas id="chartWaterConcern" style="max-height:300px;"></canvas></div>
+      </div>
+    </div>
+
+    <div class="subpanel" id="sub-health">
+      <div class="grid2">
+        <div class="card"><h3>Health problems reported</h3><canvas id="chartHealth" style="max-height:300px;"></canvas></div>
+        <div class="card"><h3>Health problems by area</h3><canvas id="chartHealthArea" style="max-height:300px;"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card section-anchor" id="surveyInsights">
+      <h3>Survey Insights</h3>
+      <div class="si-total" id="siTotal">Total Responses: —</div>
+      <div class="si-row">
+        <div>
+          <h4 style="margin:0 0 6px; font-size:14px;">Age Group distribution</h4>
+          <ul class="si-list" id="siAge"></ul>
+        </div>
+        <div>
+          <h4 style="margin:0 0 6px; font-size:14px;">Area distribution</h4>
+          <ul class="si-list" id="siArea"></ul>
+        </div>
+      </div>
+      <div class="si-row">
+        <div>
+          <h4 style="margin:0 0 6px; font-size:14px;">Air-quality observation results</h4>
+          <ul class="si-list" id="siAir"></ul>
+        </div>
+        <div>
+          <h4 style="margin:0 0 6px; font-size:14px;">Water-quality observation results</h4>
+          <ul class="si-list" id="siWater"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Key Findings</h3>
+      <ul id="keyFindingsList"></ul>
+    </div>
+
+    <div class="card section-anchor" id="awarenessTips">
+      <h3>Awareness Tips</h3>
+      <div class="tips-grid">
+        <div class="tip"><strong>Check before you step out</strong>Look up your area's AQI on days you'll be outdoors for long — reschedule intense outdoor activity if it's high.</div>
+        <div class="tip"><strong>Ventilate smartly</strong>Open windows when outdoor air is cleaner (early morning/late night); keep them shut during peak traffic hours.</div>
+        <div class="tip"><strong>Filter your water</strong>If your source shows visible impurities or odour, use a proper filter and get it tested periodically.</div>
+        <div class="tip"><strong>Reduce burning waste</strong>Avoid burning garbage or leaves — it's a major, avoidable contributor to local air pollution.</div>
+        <div class="tip"><strong>Report visible issues</strong>Discoloured water or heavy dust/smoke near you is worth reporting to local municipal authorities.</div>
+        <div class="tip"><strong>Track symptoms</strong>Persistent coughing, eye irritation or headaches tied to certain days/areas are worth noting and discussing with a doctor.</div>
+      </div>
+    </div>
+
+    <div class="row" style="justify-content:flex-end;">
+      <button class="dbtn secondary" id="exportBtn" type="button">Export data as CSV</button>
+      <button class="dbtn secondary" id="printBtn" type="button">Print / Save as PDF</button>
+    </div>
+    <div id="tableWrap" style="display:none;"></div>
+  </div>
+</section>
+
+<footer>Air & Water Quality Awareness</footer>
+
+<button id="backToTop" title="Back to top">↑</button>
+
+<script>
+/* ---------- Navigation ---------- */
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.navlink').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  window.scrollTo({top:0, behavior:'instant'});
+}
+document.querySelectorAll('.navlink').forEach(btn=>{
+  btn.addEventListener('click', ()=> goTo(btn.dataset.page));
+});
+
+/* ---------- Theme toggle ---------- */
+(function(){
+  const btn = document.getElementById('themeToggle');
+  const saved = null; // no persistence across sessions by design (keeps this static/shareable)
+  let dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function apply(){
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    btn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  }
+  apply();
+  btn.addEventListener('click', ()=>{ dark = !dark; apply(); });
+})();
+
+/* ---------- Print ---------- */
+document.getElementById('printBtn') && document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+/* ---------- Extra dashboard controls ---------- */
+function openSub(name){
+  const btn=document.querySelector('.subtab[data-sub="'+name+'"]');
+  if(btn) btn.click();
+  document.getElementById('subtabs')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function scrollToId(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}); }
+function refreshEnvironment(){
+  if(typeof renderEnvironment==='function') renderEnvironment();
+  const el=document.getElementById('envUpdated');
+  if(el) el.textContent='Last updated: '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+/* ---------- Dashboard logic ---------- */
+let mainChart;
+let autoCharts = [];
+let currentHeader = [];
+let currentRows = [];
+let loadedFromFile = false;
+const palette = ['#3E6B52','#C97A3A','#4C6178','#B4514F','#8A7B5E','#6E8F6F','#7A9E7E','#D19A6A'];
+const REAL_SURVEY_DATA = `Timestamp,What is your age group?,What is your area of residence?,How would you rate the air quality in your area?,How often do you notice air pollution in your ar,What do you think is the major source of air pollution in your area?,Have you experienced any problems that you associate with poor air quality?,How would you rate the water quality in your area?,What is your main source of drinking water?,How often do you think about the quality of the water you consume?,Have you noticed any water quality issues in your area?,How concerned are you about air pollution?,How concerned are you about water pollution?,Do you regularly check air or water quality information?,"Would data visualizations (graphs, charts, maps, etc.) help you understand environmental quality better?",What would you like to see in an environmental awareness dashboard?
+16/09/2026 22:22:19,18 -25,Nallasopara ,3,Sometimes,Industrial pollution,Eye irritation,3,Filtered water,Sometimes,Unusual colour,3,3,No,Option 2,Pollution trends
+16/09/2026 22:25:46,18 -25,Nallasopara ,3,Sometimes,Burning of waste,Eye irritation,3,Filtered water,Rarely,Unusual colour,3,3,Sometimes,Yes,Water Quality indicators
+16/09/2026 22:40:23,18 -25,Tulinj Ambawadi ,3,Sometimes,Vehicle emissions,"Breathing difficulty, Eye irritation",2,Filtered water,Sometimes,None,3,3,Sometimes,Option 2,"Air Quality Index (AQI), Water Quality indicators"
+16/09/2026 22:48:22,18 -25,Malad West Mumbai ,3,Sometimes,Construction dust,Eye irritation,3,Tap water,Sometimes,Unusual colour,1,1,No,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+16/09/2026 22:51:08,18 -25,Kandivali,3,Very often,Industrial pollution,"Breathing difficulty, Headache",2,Tap water,Sometimes,Visible impurities,4,5,Sometimes,Not much,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+16/09/2026 22:55:33,18 -25,Malabar hills,4,Sometimes,Vehicle emissions,Headache,5,Filtered water,Rarely,None,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+16/09/2026 23:05:27,18 -25,Central park,4,Sometimes,Construction dust,No such problems,3,Bottled water,Always,None,5,5,Sometimes,Yes,Air Quality Index (AQI)
+16/09/2026 23:06:22,18 -25,Kandivali East ,4,Sometimes,Construction dust,No such problems,4,Tap water,Never,None,4,4,Sometimes,Yes,Interactive maps
+16/09/2026 23:15:31,18 -25,Malad,2,Sometimes,Burning of waste,No such problems,2,Tap water,Sometimes,None,2,2,No,Not much,Pollution trends
+16/09/2026 23:30:35,26 - 40,"Indore , Madhya pradesh",5,Sometimes,Construction dust,Coughing,3,Filtered water,Never,None,4,2,Yes,Yes,Air Quality Index (AQI)
+16/09/2026 23:37:06,18 -25,Andheri,3,Often,Industrial pollution,"Coughing, Headache",2,Filtered water,Sometimes,Unusual colour,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+16/09/2026 23:37:16,18 -25,Pragati Nagar nallasopara east ,3,Rarely,Construction dust,Breathing difficulty,2,Filtered water,Rarely,Unusual colour,3,2,No,Yes,Water Quality indicators
+16/09/2026 23:41:36,26 - 40,Mumbai ,1,Never,Burning of waste,Coughing,3,Tap water,Never,Bad smell,2,2,No,Option 2,Air Quality Index (AQI)
+16/09/2026 23:43:16,18 -25,Nallasopara ,3,Rarely,Burning of waste,Breathing difficulty,3,Borewell/groundwater,Often,Bad smell,1,1,Yes,Yes,Air Quality Index (AQI)
+16/09/2026 23:43:22,18 -25,Nallasopara ,5,Rarely,Vehicle emissions,Headache,5,Filtered water,Rarely,None,1,1,Sometimes,Yes,Pollution trends
+16/09/2026 23:44:14,18 -25,Borivali,3,Very often,Vehicle emissions,Coughing,3,Filtered water,Sometimes,Visible impurities,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+16/09/2026 23:44:40,18 -25,"Santosh bhuvan, gaurai pada vasai (e)",3,Very often,Construction dust,Breathing difficulty,3,Filtered water,Always,Unusual colour,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+16/09/2026 23:53:49,18 -25,Nallasopara ,4,Sometimes,Burning of waste,"Breathing difficulty, Eye irritation",2,Filtered water,Always,Unusual colour,5,5,Yes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+17/09/2026 00:02:37,18 -25,Mumbai ,3,Sometimes,Vehicle emissions,No such problems,5,Tap water,Always,None,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+17/09/2026 00:05:45,18 -25,"Ambawadi , nallasopara ",4,Rarely,Vehicle emissions,No such problems,3,Filtered water,Sometimes,Unusual colour,1,3,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 00:12:41,18 -25,Goregaon ,2,Often,Industrial pollution,"Coughing, Eye irritation",4,Filtered water,Always,None,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 00:15:19,18 -25,Vasai-virar ,3,Often,Vehicle emissions,"Breathing difficulty, Eye irritation, Headache",1,Filtered water,Sometimes,Visible impurities,5,5,Yes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 00:16:55,18 -25,Santacruz ,3,Sometimes,Vehicle emissions,No such problems,3,Filtered water,Always,,5,4,Sometimes,Yes,"Water Quality indicators, Pollution trends, Area-wise comparison"
+17/09/2026 00:33:32,18 -25,Nallasopara ,3,Very often,Vehicle emissions,"Coughing, Breathing difficulty, Eye irritation",4,Bottled water,Always,None,5,5,Rarely,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends"
+17/09/2026 02:21:46,18 -25,Malad ,3,Often,Construction dust,Breathing difficulty,1,Tap water,Sometimes,Unusual colour,3,3,No,Yes,Air Quality Index (AQI)
+17/09/2026 06:06:12,26 - 40,Gopiganj ,4,Sometimes,Burning of waste,Coughing,4,Borewell/groundwater,Rarely,Visible impurities,3,3,Sometimes,Not much,Area-wise comparison
+17/09/2026 06:26:31,18 -25,Mumbai ,5,Sometimes,Construction dust,No such problems,4,Filtered water,Sometimes,Bad taste,4,3,No,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 08:25:04,18 -25,Mumbai,3,Often,Construction dust,Eye irritation,3,Filtered water,Sometimes,Unusual colour,5,5,Sometimes,Yes,Air Quality Index (AQI)
+17/09/2026 09:15:01,18 -25,Urban,3,Rarely,Burning of waste,No such problems,2,Tap water,Rarely,None,3,2,No,Yes,Air Quality Index (AQI)
+17/09/2026 09:30:11,Above 60,Others,1,Often,Burning of waste,Coughing,1,Borewell/groundwater,Rarely,Bad taste,3,3,Rarely,Not much,Area-wise comparison
+17/09/2026 09:38:42,18 -25,Mumbai ,1,Often,Industrial pollution,Eye irritation,2,Borewell/groundwater,Often,Visible impurities,4,4,No,Yes,Pollution trends
+17/09/2026 09:40:12,18 -25,,2,Often,Industrial pollution,Eye irritation,2,Borewell/groundwater,Always,Visible impurities,4,4,No,Yes,Pollution trends
+17/09/2026 10:00:02,18 -25,Nallasopara ,1,Rarely,Vehicle emissions,Eye irritation,3,Filtered water,Sometimes,Unusual colour,3,3,No,Yes,Air Quality Index (AQI)
+17/09/2026 10:14:38,18 -25,Nallasopara,3,Sometimes,Vehicle emissions,"Coughing, Breathing difficulty, Headache",2,Borewell/groundwater,Often,Unusual colour,5,5,Rarely,Yes,"Air Quality Index (AQI), Water Quality indicators, Interactive maps"
+17/09/2026 10:44:26,18 -25,Prem nagar goregaon ,2,Sometimes,Vehicle emissions,Breathing difficulty,3,Tap water,Rarely,Bad smell,3,3,Sometimes,Not much,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 12:49:55,18 -25,Bhadohi uttar Pradesh ,3,Rarely,Construction dust,Eye irritation,4,Tap water,Sometimes,Bad taste,4,3,Sometimes,Yes,Air Quality Index (AQI)
+17/09/2026 14:30:28,18 -25,,4,Often,Vehicle emissions,"Headache, No such problems",3,Borewell/groundwater,Sometimes,Visible impurities,3,3,Yes,Not much,"Water Quality indicators, Pollution trends"
+17/09/2026 18:12:26,18 -25,Palghar ,3,Often,Vehicle emissions,Headache,4,Borewell/groundwater,Always,Visible impurities,5,5,Sometimes,Yes,Area-wise comparison
+17/09/2026 20:54:39,26 - 40,Sagour kuti pithampur ,3,Often,Industrial pollution,Headache,3,Bottled water,Often,Bad taste,3,4,Yes,Yes,Pollution trends
+17/09/2026 21:45:29,18 -25,Mumbai ,4,Sometimes,Burning of waste,Coughing,4,Tap water,Sometimes,Bad smell,5,5,Yes,Yes,Air Quality Index (AQI)
+17/09/2026 21:45:48,18 -25,Malad West ,3,Sometimes,Vehicle emissions,"Eye irritation, Headache",4,Tap water,Sometimes,None,3,2,Yes,Yes,Water Quality indicators
+17/09/2026 21:48:32,18 -25,Goregaon ,2,Often,Vehicle emissions,"Coughing, Eye irritation, Headache",4,Filtered water,Sometimes,None,5,5,Yes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison"
+17/09/2026 21:50:05,18 -25,Goregaon west.,1,Often,Construction dust,"Coughing, Breathing difficulty, Eye irritation",4,Borewell/groundwater,Sometimes,Visible impurities,4,3,Yes,No,"Air Quality Index (AQI), Water Quality indicators"
+17/09/2026 21:54:39,41 - 60,Kandivali west,1,Often,Burning of waste,Breathing difficulty,1,Borewell/groundwater,Often,Unusual colour,5,5,Sometimes,Yes,Air Quality Index (AQI)
+17/09/2026 22:06:07,18 -25,Kalyan East ,4,Sometimes,Industrial pollution,Headache,3,Filtered water,Sometimes,None,2,4,No,Yes,Water Quality indicators
+17/09/2026 22:11:23,18 -25,Kandivali ,3,Sometimes,Construction dust,"Coughing, Breathing difficulty",3,Filtered water,Often,Unusual colour,4,4,Yes,Yes,"Water Quality indicators, Pollution trends"
+17/09/2026 22:13:35,18 -25,Malad ,4,Often,Construction dust,"Coughing, Breathing difficulty",3,Filtered water,Often,Unusual colour,4,4,Yes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+17/09/2026 22:22:19,18 -25,Western line,4,Often,Vehicle emissions,No such problems,4,Filtered water,Often,Unusual colour,3,3,Rarely,Not much,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 22:27:10,18 -25,Dahisar,3,Sometimes,Construction dust,"Breathing difficulty, Eye irritation",3,Tap water,Sometimes,Unusual colour,3,3,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+17/09/2026 22:30:09,26 - 40,Mira Road,3,Often,Vehicle emissions,"Eye irritation, Headache",3,Bottled water,Rarely,Visible impurities,3,4,Sometimes,Not much,"Pollution trends, Area-wise comparison"
+17/09/2026 22:30:44,41 - 60,Delhi ,2,Never,Burning of waste,Coughing,3,Bottled water,Always,Unusual colour,2,3,Sometimes,Option 2,Pollution trends
+17/09/2026 22:31:56,Below 18,,4,Rarely,Vehicle emissions,Headache,3,Tap water,Rarely,None,2,4,No,Yes,Air Quality Index (AQI)
+17/09/2026 22:33:13,26 - 40,,5,Never,No,No such problems,5,Filtered water,Sometimes,None,5,5,Rarely,Yes,Water Quality indicators
+17/09/2026 22:34:48,26 - 40,Virar,4,Sometimes,Burning of waste,"Coughing, Headache",4,Filtered water,Sometimes,Unusual colour,4,4,Yes,Not much,"Pollution trends, Area-wise comparison"
+17/09/2026 22:37:31,41 - 60,Nallasopara ,3,Rarely,Construction dust,"Breathing difficulty, Eye irritation",4,Filtered water,Sometimes,Unusual colour,4,4,Yes,Not much,"Pollution trends, Area-wise comparison"
+17/09/2026 22:38:42,Below 18,Vasai ,5,Sometimes,Burning of waste,Headache,5,Filtered water,Sometimes,Visible impurities,5,5,Yes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+17/09/2026 22:39:56,18 -25,Bhayandar ,4,Often,Vehicle emissions,Headache,4,Filtered water,Sometimes,Unusual colour,4,4,Yes,Yes,"Pollution trends, Area-wise comparison"
+17/09/2026 22:41:30,26 - 40,Andheri ,3,Rarely,Industrial pollution,"Breathing difficulty, Eye irritation",4,Filtered water,Sometimes,Unusual colour,4,4,Yes,Yes,"Air Quality Index (AQI), Area-wise comparison"
+17/09/2026 22:43:16,18 -25,Goregaon ,4,Sometimes,Industrial pollution,"Eye irritation, Headache",4,Filtered water,Sometimes,Unusual colour,4,4,Yes,Yes,"Pollution trends, Area-wise comparison"
+17/09/2026 22:44:15,18 -25,Malad,4,Sometimes,Vehicle emissions,"Breathing difficulty, Eye irritation",3,Filtered water,Rarely,Unusual colour,4,4,Yes,Yes,"Water Quality indicators, Pollution trends"
+17/09/2026 22:51:17,18 -25,Malad ,3,Sometimes,Construction dust,Headache,3,Tap water,Never,None,4,4,Sometimes,Not much,Air Quality Index (AQI)
+17/09/2026 23:24:20,18 -25,Nagaur ,4,Sometimes,Vehicle emissions,No such problems,3,Rain water ,Sometimes,None,4,4,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+17/09/2026 23:28:03,41 - 60,Ambawadi ,3,Sometimes,Vehicle emissions,"Coughing, Breathing difficulty, Eye irritation",2,Filtered water,Sometimes,Visible impurities,4,2,Sometimes,Yes,"Air Quality Index (AQI), Area-wise comparison"
+17/09/2026 23:30:04,18 -25,Tulinj ,3,Sometimes,Vehicle emissions,"Breathing difficulty, Eye irritation",3,Filtered water,Sometimes,Visible impurities,4,3,Sometimes,Option 2,"Air Quality Index (AQI), Water Quality indicators"
+18/09/2026 00:17:55,18 -25,Ambawadi ,3,Sometimes,Construction dust,"Coughing, Breathing difficulty, Eye irritation",3,Filtered water,Sometimes,Visible impurities,3,2,Sometimes,Option 2,"Air Quality Index (AQI), Water Quality indicators"
+18/09/2026 00:18:50,18 -25,Tulinj ,3,Sometimes,Vehicle emissions,"Coughing, Breathing difficulty, Eye irritation",2,Filtered water,Sometimes,Visible impurities,3,2,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators"
+18/09/2026 00:25:44,18 -25,Colaba ,3,Sometimes,Vehicle emissions,Eye irritation,3,Filtered water,Sometimes,Bad taste,3,4,No,Option 2,Pollution trends
+18/09/2026 07:11:46,18 -25,Bhayandar west ,4,Sometimes,Construction dust,"Coughing, Breathing difficulty, Eye irritation",1,Filtered water,Often,Bad smell,5,5,No,Not much,Air Quality Index (AQI)
+18/09/2026 09:48:01,18 -25,Kandivali ,3,Sometimes,Industrial pollution,"Eye irritation, Headache",3,Filtered water,Sometimes,Unusual colour,5,5,Sometimes,Yes,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison, Interactive maps"
+18/09/2026 10:26:27,26 - 40,Kandivali West,1,Often,Construction dust,Coughing,1,Bottled water,Sometimes,Unusual colour,5,5,No,Yes,Air Quality Index (AQI)
+18/09/2026 12:29:41,18 -25,Lokmanpur,3,Sometimes,Burning of waste,"Coughing, Headache",,Borewell/groundwater,Sometimes,,3,,Sometimes,No,"Air Quality Index (AQI), Water Quality indicators, Pollution trends, Area-wise comparison"
+18/09/2026 14:05:25,18 -25,Bandra,3,Sometimes,Vehicle emissions,"Breathing difficulty, Headache",3,Filtered water,Often,Unusual colour,5,5,Yes,Yes,Air Quality Index (AQI)`;
+
+
+function parseCSV(text, forceComma){
+  const lines = text.trim().split(/\r?\n/).filter(l=>l.trim().length);
+  if(!lines.length) return {header:[], rows:[]};
+
+  let delimType;
+  if(forceComma) delimType = 'comma';
+  else if(lines[0].includes('\t')) delimType = 'tab';
+  else if(/ {2,}/.test(lines[0])) delimType = 'space';
+  else delimType = 'comma';
+
+  const splitLine = (line)=>{
+    if(delimType==='tab') return line.split('\t').map(c=>c.trim());
+    if(delimType==='space') return line.split(/ {2,}/).map(c=>c.trim()).filter(c=>c.length);
+    const out=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){ inQ=!inQ; continue; }
+      if(c===',' && !inQ){ out.push(cur.trim()); cur=''; continue; }
+      cur+=c;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+
+  let header = splitLine(lines[0]);
+  let rows = lines.slice(1).map(splitLine);
+
+  if(header.length <= 1 && lines.length > 1){
+    for(const alt of ['tab','space','comma']){
+      const h2 = (alt==='tab') ? lines[0].split('\t').map(c=>c.trim())
+                : (alt==='space') ? lines[0].split(/ {2,}/).map(c=>c.trim()).filter(c=>c.length)
+                : lines[0].split(',').map(c=>c.trim());
+      if(h2.length > header.length){
+        delimType = alt; header = h2; rows = lines.slice(1).map(splitLine);
+      }
+    }
+  }
+
+  rows = rows.map(r=>{
+    if(r.length < header.length) return r.concat(new Array(header.length - r.length).fill(''));
+    if(r.length > header.length) return r.slice(0, header.length);
+    return r;
+  });
+
+  return {header, rows};
+}
+
+function loadSample(){
+  document.getElementById('csvInput').value = REAL_SURVEY_DATA;
+  loadedFromFile = true;
+  renderFromInput();
+}
+
+/* ---------- Global chart defaults: tooltips show count + percentage ---------- */
+Chart.defaults.plugins.tooltip.callbacks.label = function(ctx){
+  const ds = ctx.dataset.data;
+  const total = ds.reduce((a,b)=>a + (typeof b === 'number' ? b : 0), 0);
+  const val = ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed;
+  if(typeof val !== 'number' || !total) return ctx.label + ': ' + val;
+  const pct = ((val/total)*100).toFixed(1);
+  return (ctx.label || ctx.dataset.label || '') + ': ' + val + ' (' + pct + '%)';
+};
+
+function isNumericColumn(colIndex, rows){
+  return rows.every(r => r[colIndex]==='' || !isNaN(parseFloat(r[colIndex])));
+}
+
+function tally(colIndex, rows){
+  const counts = {};
+  rows.forEach(r=>{
+    const cell = (r[colIndex] ?? '').toString();
+    if(!cell) return;
+    cell.split(',').map(s=>s.trim()).forEach(v=>{
+      if(!v) return;
+      counts[v] = (counts[v]||0)+1;
+    });
+  });
+  return counts;
+}
+
+function drawChartInto(canvasEl, colIndex, header, rows, existingChartRef){
+  if(!canvasEl || colIndex===null || colIndex===undefined) return existingChartRef;
+  const counts = tally(colIndex, rows);
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+  if(existingChartRef) existingChartRef.destroy();
+  if(!labels.length){ return null; }
+  const type = labels.length <= 6 ? 'doughnut' : 'bar';
+  return new Chart(canvasEl, {
+    type,
+    data:{ labels, datasets:[{ label: header[colIndex], data, backgroundColor: palette }]},
+    options:{
+      responsive:true,
+      plugins:{ legend:{ display:true, position:'bottom' } },
+      scales: type==='bar' ? { y:{ beginAtZero:true, ticks:{precision:0} } } : {}
+    }
+  });
+}
+
+function renderSelectedChart(){
+  const idx = parseInt(document.getElementById('colSelect').value, 10);
+  mainChart = drawChartInto(document.getElementById('mainChart'), idx, currentHeader, getFilteredRows(), mainChart);
+}
+
+/* ---------- Column finder ---------- */
+function findCol(patterns){
+  for(const p of patterns){
+    const idx = currentHeader.findIndex(h => p.test(h));
+    if(idx !== -1) return idx;
+  }
+  return null;
+}
+let colMap = {};
+function buildColMap(){
+  colMap = {
+    ageGroup: findCol([/age group/i]),
+    area: findCol([/area of residence/i, /^area$/i]),
+    airRating: findCol([/rate the air quality/i]),
+    airFreq: findCol([/notice air pollution/i]),
+    airSource: findCol([/source of air pollution/i]),
+    airConcern: findCol([/concerned.*air/i]),
+    healthProblems: findCol([/problems.*air quality/i, /health problem/i]),
+    waterRating: findCol([/rate the water quality/i]),
+    waterSource: findCol([/source of drinking water/i]),
+    waterIssue: findCol([/water quality issue/i]),
+    waterConcern: findCol([/concerned.*water/i]),
+  };
+}
+
+/* ---------- Filters ---------- */
+let activeFilters = { age:'', area:'', category:'' };
+function getFilteredRows(){
+  return currentRows.filter(r=>{
+    if(activeFilters.age && colMap.ageGroup!==null && r[colMap.ageGroup] !== activeFilters.age) return false;
+    if(activeFilters.area && colMap.area!==null && r[colMap.area] !== activeFilters.area) return false;
+    if(activeFilters.category && colMap.airSource!==null && r[colMap.airSource] !== activeFilters.category) return false;
+    return true;
+  });
+}
+
+function populateFilterOptions(){
+  const ageSel = document.getElementById('filterAge');
+  const areaSel = document.getElementById('filterArea');
+  const catSel = document.getElementById('filterCategory');
+  if(colMap.ageGroup!==null){
+    const vals = [...new Set(currentRows.map(r=>r[colMap.ageGroup]).filter(Boolean))].sort();
+    ageSel.innerHTML = '<option value="">All ages</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+    document.getElementById('filterBar').style.display = 'flex';
+  }
+  if(colMap.area!==null){
+    const vals = [...new Set(currentRows.map(r=>r[colMap.area]).filter(Boolean))].sort();
+    areaSel.innerHTML = '<option value="">All areas</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+  }
+  if(colMap.airSource!==null && catSel){
+    const vals = [...new Set(currentRows.map(r=>r[colMap.airSource]).filter(Boolean))].sort();
+    catSel.innerHTML = '<option value="">All categories</option>' + vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+  }
+}
+
+/* ---------- Insights ---------- */
+function topOf(counts){
+  let bestK=null, bestV=-1;
+  Object.entries(counts).forEach(([k,v])=>{ if(v>bestV){bestV=v; bestK=k;} });
+  return bestK;
+}
+function avgOf(colIndex, rows){
+  if(colIndex===null) return null;
+  const nums = rows.map(r=>parseFloat(r[colIndex])).filter(n=>!isNaN(n));
+  if(!nums.length) return null;
+  return (nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1);
+}
+
+function renderInsights(rows){
+  const cards = [];
+  const avgAir = avgOf(colMap.airRating, rows);
+  const avgWater = avgOf(colMap.waterRating, rows);
+  if(avgAir!==null) cards.push({k:'Avg air quality rating', v: avgAir + ' / 5'});
+  if(avgWater!==null) cards.push({k:'Avg water quality rating', v: avgWater + ' / 5'});
+  if(colMap.airSource!==null){
+    const top = topOf(tally(colMap.airSource, rows));
+    if(top) cards.push({k:'Top reported air pollution source', v: top});
+  }
+  if(colMap.healthProblems!==null){
+    const counts = tally(colMap.healthProblems, rows);
+    delete counts['No such problems'];
+    const top = topOf(counts);
+    if(top) cards.push({k:'Most reported health issue', v: top});
+  }
+  if(colMap.waterSource!==null){
+    const top = topOf(tally(colMap.waterSource, rows));
+    if(top) cards.push({k:'Most common drinking water source', v: top});
+  }
+  cards.push({k:'Responses in view', v: rows.length + ' of ' + currentRows.length});
+
+  document.getElementById('insightsRow').innerHTML = cards.map(c=>
+    `<div class="insight"><div class="k">${c.k}</div><div class="v">${c.v}</div></div>`
+  ).join('');
+}
+
+/* ---------- Themed sub-tab charts ---------- */
+let themedCharts = {};
+function drawThemed(id, colIndex, rows){
+  const el = document.getElementById(id);
+  if(!el) return;
+  themedCharts[id] = drawChartInto(el, colIndex, currentHeader, rows, themedCharts[id]);
+}
+function renderThemedCharts(rows){
+  drawThemed('chartAirRating', colMap.airRating, rows);
+  drawThemed('chartAirSource', colMap.airSource, rows);
+  drawThemed('chartAirFreq', colMap.airFreq, rows);
+  drawThemed('chartAirConcern', colMap.airConcern, rows);
+  drawThemed('chartWaterRating', colMap.waterRating, rows);
+  drawThemed('chartWaterSource', colMap.waterSource, rows);
+  drawThemed('chartWaterIssue', colMap.waterIssue, rows);
+  drawThemed('chartWaterConcern', colMap.waterConcern, rows);
+  drawThemed('chartHealth', colMap.healthProblems, rows);
+
+  // Health by area (top 6 areas, count of non-"No such problems" mentions)
+  const elHA = document.getElementById('chartHealthArea');
+  if(elHA && colMap.area!==null && colMap.healthProblems!==null){
+    const byArea = {};
+    rows.forEach(r=>{
+      const area = r[colMap.area] || 'Unknown';
+      const health = (r[colMap.healthProblems]||'').toString();
+      if(!health || /no such problems/i.test(health)) return;
+      byArea[area] = (byArea[area]||0) + health.split(',').filter(s=>s.trim()).length;
+    });
+    const sorted = Object.entries(byArea).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(themedCharts['chartHealthArea']) themedCharts['chartHealthArea'].destroy();
+    if(sorted.length){
+      themedCharts['chartHealthArea'] = new Chart(elHA, {
+        type:'bar',
+        data:{ labels: sorted.map(s=>s[0]), datasets:[{ label:'Health mentions', data: sorted.map(s=>s[1]), backgroundColor: palette }]},
+        options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{precision:0}}} }
+      });
+    }
+  }
+}
+
+/* ---------- Overview extra charts ---------- */
+let overviewCharts = {};
+function renderAreaComparison(rows){
+  const el = document.getElementById('chartAreaCompare');
+  if(!el || colMap.area===null || colMap.airRating===null) return;
+  const byArea = {};
+  rows.forEach(r=>{
+    const area = (r[colMap.area]||'').trim();
+    const val = parseFloat(r[colMap.airRating]);
+    if(!area || isNaN(val)) return;
+    if(!byArea[area]) byArea[area] = [];
+    byArea[area].push(val);
+  });
+  const entries = Object.entries(byArea)
+    .filter(([,v])=>v.length>=1)
+    .map(([k,v])=>[k, v.reduce((a,b)=>a+b,0)/v.length, v.length])
+    .sort((a,b)=>a[1]-b[1])
+    .slice(0,10);
+  if(overviewCharts.area) overviewCharts.area.destroy();
+  if(!entries.length) return;
+  overviewCharts.area = new Chart(el, {
+    type:'bar',
+    data:{ labels: entries.map(e=>e[0]+' ('+e[2]+')'), datasets:[{ label:'Avg air rating', data: entries.map(e=>e[1].toFixed(2)), backgroundColor: palette }]},
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, max:5}} }
+  });
+}
+
+function renderCorrelation(rows){
+  const el = document.getElementById('chartCorrelation');
+  if(!el || colMap.airRating===null || colMap.waterRating===null) return;
+  const points = rows.map(r=>({x: parseFloat(r[colMap.airRating]), y: parseFloat(r[colMap.waterRating])}))
+    .filter(p=>!isNaN(p.x) && !isNaN(p.y));
+  if(overviewCharts.corr) overviewCharts.corr.destroy();
+  if(!points.length) return;
+  overviewCharts.corr = new Chart(el, {
+    type:'scatter',
+    data:{ datasets:[{ label:'Responses', data: points, backgroundColor: '#3E6B52' }]},
+    options:{
+      responsive:true,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ title:{display:true, text:'Air quality rating'}, min:0, max:5.5, ticks:{stepSize:1} },
+        y:{ title:{display:true, text:'Water quality rating'}, min:0, max:5.5, ticks:{stepSize:1} }
+      }
+    }
+  });
+}
+
+/* ---------- Sub-tabs ---------- */
+document.querySelectorAll('.subtab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.subtab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.subpanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sub-'+btn.dataset.sub).classList.add('active');
+  });
+});
+
+/* ---------- Table + search ---------- */
+let lastRenderedRows = [];
+function renderTable(rows, header){
+  lastRenderedRows = rows;
+  let tableHtml = '<table><thead><tr>';
+  header.forEach(h=> tableHtml += `<th>${h}</th>`);
+  tableHtml += '</tr></thead><tbody>';
+  rows.slice(0,50).forEach(r=>{
+    tableHtml += '<tr>' + r.map(c=>`<td>${c}</td>`).join('') + '</tr>';
+  });
+  tableHtml += '</tbody></table>';
+  if(!rows.length) tableHtml = '<p class="empty">No responses match your filters/search.</p>';
+  else if(rows.length>50) tableHtml += `<p class="empty">Showing first 50 of ${rows.length} responses</p>`;
+  document.getElementById('tableWrap').innerHTML = tableHtml;
+}
+
+function applySearchAndRender(){
+  let rows = getFilteredRows();
+  lastRenderedRows = rows;
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const rows = [currentHeader, ...currentRows];
+  const csv = rows.map(r => r.map(c => {
+    const s = (c||'').toString();
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'filtered-responses.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ---------- Quick summary cards ---------- */
+function renderQuickSummary(rows){
+  document.getElementById('qsResponses').textContent = currentRows.length;
+  const areaCount = colMap.area!==null ? new Set(currentRows.map(r=>r[colMap.area]).filter(Boolean)).size : '—';
+  document.getElementById('qsAreas').textContent = areaCount;
+  const waterSrcCount = colMap.waterSource!==null ? new Set(currentRows.map(r=>r[colMap.waterSource]).filter(Boolean)).size : '—';
+  document.getElementById('qsWaterSources').textContent = waterSrcCount;
+}
+
+/* ---------- Survey Insights (replaces raw table) ---------- */
+function pctList(colIndex, rows, limit){
+  if(colIndex===null) return [];
+  const counts = tally(colIndex, rows);
+  const total = rows.length || 1;
+  let entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(limit) entries = entries.slice(0, limit);
+  return entries.map(([k,v])=>({k, v, pct: ((v/total)*100).toFixed(1)}));
+}
+function renderList(elId, items){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!items.length){ el.innerHTML = '<li class="si-label" style="color:var(--ink-soft);">No data</li>'; return; }
+  el.innerHTML = items.map(i=>`<li><span class="si-label">${i.k}</span><span class="si-val">${i.v} (${i.pct}%)</span></li>`).join('');
+}
+
+function renderSurveyInsights(rows){
+  document.getElementById('siTotal').textContent = 'Total Responses: ' + rows.length;
+  renderList('siAge', pctList(colMap.ageGroup, rows));
+  renderList('siArea', pctList(colMap.area, rows, 8));
+
+  // Air-quality observation results: rating distribution
+  const airItems = pctList(colMap.airRating, rows).map(i=>({...i, k: 'Rating ' + i.k}));
+  renderList('siAir', airItems);
+
+  // Water-quality observation results: rating distribution
+  const waterItems = pctList(colMap.waterRating, rows).map(i=>({...i, k: 'Rating ' + i.k}));
+  renderList('siWater', waterItems);
+}
+
+/* ---------- Key Findings (computed only, no fabrication) ---------- */
+function renderKeyFindings(rows){
+  const findings = [];
+  const total = rows.length;
+  if(!total){ document.getElementById('keyFindingsList').innerHTML = '<li>No data available.</li>'; return; }
+
+  const avgAir = avgOf(colMap.airRating, rows);
+  const avgWater = avgOf(colMap.waterRating, rows);
+  if(avgAir!==null) findings.push(`Average self-reported air quality rating is <strong>${avgAir}/5</strong> across ${total} responses.`);
+  if(avgWater!==null) findings.push(`Average self-reported water quality rating is <strong>${avgWater}/5</strong>.`);
+
+  if(colMap.airSource!==null){
+    const top = pctList(colMap.airSource, rows, 1)[0];
+    if(top) findings.push(`The most commonly reported air pollution source is <strong>${top.k}</strong> (${top.v} of ${total} responses, ${top.pct}%).`);
+  }
+  if(colMap.healthProblems!==null){
+    const counts = tally(colMap.healthProblems, rows);
+    delete counts['No such problems'];
+    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    if(entries.length){
+      const [k,v] = entries[0];
+      findings.push(`The most frequently reported health issue linked to air/water quality is <strong>${k}</strong> (${v} mentions).`);
+    }
+  }
+  if(colMap.waterSource!==null){
+    const top = pctList(colMap.waterSource, rows, 1)[0];
+    if(top) findings.push(`The most common drinking water source among respondents is <strong>${top.k}</strong> (${top.v} responses, ${top.pct}%).`);
+  }
+  if(colMap.airConcern!==null){
+    const nums = rows.map(r=>parseFloat(r[colMap.airConcern])).filter(n=>!isNaN(n));
+    const highConcern = nums.filter(n=>n>=4).length;
+    if(nums.length) findings.push(`${highConcern} of ${nums.length} respondents (${((highConcern/nums.length)*100).toFixed(1)}%) rated their concern about air pollution as 4 or 5 out of 5.`);
+  }
+  if(colMap.area!==null && colMap.airRating!==null){
+    const byArea = {};
+    rows.forEach(r=>{
+      const area=(r[colMap.area]||'').trim(); const val=parseFloat(r[colMap.airRating]);
+      if(!area||isNaN(val)) return;
+      (byArea[area] = byArea[area]||[]).push(val);
+    });
+    const avgs = Object.entries(byArea).map(([k,v])=>[k, v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>a[1]-b[1]);
+    if(avgs.length) findings.push(`<strong>${avgs[0][0]}</strong> reported the lowest average air quality rating (${avgs[0][1].toFixed(1)}/5) among areas with responses.`);
+  }
+
+  document.getElementById('keyFindingsList').innerHTML = findings.map(f=>`<li>${f}</li>`).join('');
+}
+
+/* ---------- Simulated environmental readings ---------- */
+function statusFor(value, safeMax, cautionMax){
+  if(value <= safeMax) return 'safe';
+  if(value <= cautionMax) return 'caution';
+  return 'unsafe';
+}
+function renderEnvSimulation(){
+  const seed = new Date().getDate(); // deterministic-ish per day, clearly simulated
+  const aqi = 60 + (seed * 7) % 140;
+  const pm25 = 20 + (seed * 3) % 80;
+  const ph = (6.5 + ((seed % 10) / 10)).toFixed(1);
+  const turbidity = 1 + (seed % 6);
+
+  const tiles = [
+    { l:'AQI', v:aqi, s: statusFor(aqi, 100, 200) },
+    { l:'PM2.5 (µg/m³)', v:pm25, s: statusFor(pm25, 35, 75) },
+    { l:'Water pH', v:ph, s: (ph>=6.5 && ph<=8.5) ? 'safe' : (ph>=6 && ph<=9 ? 'caution' : 'unsafe') },
+    { l:'Turbidity (NTU)', v:turbidity, s: statusFor(turbidity, 3, 5) },
+  ];
+  document.getElementById('envGrid').innerHTML = tiles.map(t=>
+    `<div class="env-tile"><div class="el">${t.l}</div><div class="ev">${t.v}</div><span class="badge ${t.s}">${t.s.charAt(0).toUpperCase()+t.s.slice(1)}</span></div>`
+  ).join('');
+  const now = new Date();
+  document.getElementById('envUpdated').textContent = 'Last updated: ' + now.toLocaleString();
+}
+
+/* ---------- Back to top ---------- */
+const backToTopBtn = document.getElementById('backToTop');
+window.addEventListener('scroll', ()=>{
+  backToTopBtn.classList.toggle('show', window.scrollY > 400);
+});
+backToTopBtn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+/* ---------- Home animated counters ---------- */
+function animateCount(id, target, suffix){
+  const el = document.getElementById(id);
+  if(!el) return;
+  let cur = 0;
+  const step = Math.max(1, Math.round(target/30));
+  const tick = ()=>{
+    cur = Math.min(target, cur+step);
+    el.textContent = cur + (suffix||'');
+    if(cur < target) requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+/* ---------- Main render pipeline ---------- */
+function refreshAll(){
+  buildColMap();
+  populateFilterOptions();
+  const rows = getFilteredRows();
+  renderInsights(rows);
+  renderSelectedChart();
+
+  const selectableCols = currentHeader.map((h,i)=>({h,i})).filter(c=>!/timestamp|time stamp/i.test(c.h));
+  const gridCols = selectableCols.filter(c=>c.i !== parseInt(document.getElementById('colSelect').value,10)).slice(0, 4);
+  autoCharts.forEach(c=>c && c.destroy());
+  autoCharts = [];
+  const gridEl = document.getElementById('autoGrid');
+  gridEl.innerHTML = gridCols.map(c=>`<div class="card"><h3>${c.h}</h3><canvas id="auto_${c.i}"></canvas></div>`).join('');
+  gridCols.forEach(c=>{
+    const chart = drawChartInto(document.getElementById(`auto_${c.i}`), c.i, currentHeader, rows, null);
+    autoCharts.push(chart);
+  });
+
+  renderThemedCharts(rows);
+  renderAreaComparison(rows);
+  renderCorrelation(rows);
+  applySearchAndRender();
+  renderQuickSummary(rows);
+  renderSurveyInsights(rows);
+  renderKeyFindings(rows);
+  renderEnvSimulation();
+
+  animateCount('homeStat2', currentHeader.length);
+  const areaCount = colMap.area!==null ? new Set(currentRows.map(r=>r[colMap.area]).filter(Boolean)).size : 0;
+  animateCount('homeStat3', areaCount);
+}
+
+function renderFromInput(){
+  try{
+    const raw = document.getElementById('csvInput').value;
+    const parsed = parseCSV(raw, loadedFromFile);
+    if(!parsed.rows || !parsed.rows.length || !parsed.header.length){
+      document.getElementById('tableWrap').innerHTML = '<p class="empty">Couldn\'t read that — make sure you pasted the header row plus at least one data row.</p>';
+      return;
+    }
+    const {header, rows} = parsed;
+    currentHeader = header; currentRows = rows;
+    activeFilters = { age:'', area:'' };
+
+    const totalResponses = rows.length;
+    let avgCol = null;
+    header.forEach((h,i)=>{ if(/rating|score/i.test(h) && isNumericColumn(i, rows)) avgCol = i; });
+    const avgVal = avgCol!==null ? (rows.reduce((s,r)=>s+parseFloat(r[avgCol]||0),0)/rows.length).toFixed(2) : '—';
+
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat"><div class="num">${totalResponses}</div><div class="lbl">Total responses</div></div>
+      <div class="stat"><div class="num">${header.length}</div><div class="lbl">Questions</div></div>
+      <div class="stat"><div class="num">${avgVal}</div><div class="lbl">Avg rating${avgCol!==null ? ' — '+header[avgCol] : ''}</div></div>
+    `;
+
+    const selectableCols = header.map((h,i)=>({h,i})).filter(c=>!/timestamp|time stamp/i.test(c.h));
+    const sel = document.getElementById('colSelect');
+    sel.innerHTML = selectableCols.map(c=>`<option value="${c.i}">${c.h}</option>`).join('');
+    sel.value = selectableCols[0].i;
+
+    refreshAll();
+  }catch(err){
+    document.getElementById('tableWrap').innerHTML = '<p class="empty">Something went wrong reading the data: ' + (err.message||err) + '</p>';
+  }
+}
+
+document.getElementById('buildBtn').addEventListener('click', renderFromInput);
+document.getElementById('sampleBtn').addEventListener('click', loadSample);
+document.getElementById('colSelect').addEventListener('change', refreshAll);
+document.getElementById('csvInput').addEventListener('input', function(){ loadedFromFile = false; });
+document.getElementById('csvFile').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    document.getElementById('csvInput').value = evt.target.result;
+    loadedFromFile = true;
+    renderFromInput();
+  };
+  reader.onerror = function(){
+    document.getElementById('tableWrap').innerHTML = '<p class="empty">Could not read that file — try pasting the data instead.</p>';
+  };
+  reader.readAsText(file);
+});
+document.getElementById('filterAge').addEventListener('change', function(){ activeFilters.age = this.value; refreshAll(); });
+document.getElementById('filterArea').addEventListener('change', function(){ activeFilters.area = this.value; refreshAll(); });
+document.getElementById('filterCategory').addEventListener('change', function(){ activeFilters.category = this.value; refreshAll(); });
+document.getElementById('clearFilters').addEventListener('click', function(){
+  activeFilters = { age:'', area:'', category:'' };
+  document.getElementById('filterAge').value = '';
+  document.getElementById('filterArea').value = '';
+  document.getElementById('filterCategory').value = '';
+  refreshAll();
+});
+
+loadSample();
+
+(function(){function t(id,v){var e=document.getElementById(id);if(e)e.textContent=v}function env(){var a=Math.floor(75+Math.random()*45),p25=Math.floor(28+Math.random()*20),p10=Math.floor(55+Math.random()*35),no2=(20+Math.random()*15).toFixed(1),ph=(6.8+Math.random()*.8).toFixed(1),tds=Math.floor(180+Math.random()*90);t('envAqi',a);t('envPm25',p25);t('envPm10',p10);t('envNo2',no2);t('envPh',ph);t('envTds',tds);t('envAirStatus',a<=100?'🟢 Safe':'🟡 Caution');t('envWaterStatus',(ph>=6.5&&ph<=8.5&&tds<500)?'🟢 Safe':'🟡 Caution');t('envUpdated','Last updated: '+new Date().toLocaleTimeString())}env();setInterval(env,30000);function chart(id,labels,data){var c=document.getElementById(id);if(!c||typeof Chart==='undefined')return;new Chart(c,{type:'bar',data:{labels:labels,datasets:[{label:'Reported rating',data:data,borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:5}}}})}function init(){chart('trendAirChart',['Nallasopara','Mumbai','Malad','Kandivali','Goregaon'],[3.1,3,2.9,3.2,3.3]);chart('trendWaterChart',['Borewell','Municipal','Pond','RO Outlet'],[3.4,3.6,2.8,4.1])}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()})();
+</script>
+</body>
+</html>
